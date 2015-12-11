@@ -15,25 +15,6 @@ __global__ void mulKernel(int *productbuf, const int *arg1buf, const int *arg2bu
 	productbuf[i] = arg1buf[i] * arg2buf[i];
 }
 
-int main()
-{
-    const int arraySize = 5;
-    const int a[arraySize] = { 1, 2, 3, 4, 5 };
-    const int b[arraySize] = { 10, 10, 10, 10, 10 };
-    int c[arraySize] = { 0 };
-
-	mulWithCuda(c, a, b, arraySize);
-
-    printf("{1,2,3,4,5} dot {10,10,10,10,10} = {%d,%d,%d,%d,%d}\n",
-        c[0], c[1], c[2], c[3], c[4]);
-
-    // cudaDeviceReset must be called before exiting in order for profiling and
-    // tracing tools such as Nsight and Visual Profiler to show complete traces.
-	COOLDAE(cudaDeviceReset());
-
-    return 0;
-}
-
 typedef void* cudaBuf;
 
 void cudaSetup(cudaBuf *a, cudaBuf *b, cudaBuf *c, unsigned int size)
@@ -58,7 +39,7 @@ void cudaTransfer(cudaBuf cudabuf, const int *hostdata, unsigned int size)
 
 void cudaGetBack(int *hostdata, cudaBuf cudabuf, unsigned int size)
 {
-	COOLDAE(cudaMemcpy(cudabuf, hostdata, size * sizeof(int), cudaMemcpyDeviceToHost));
+	COOLDAE(cudaMemcpy(hostdata, cudabuf, size * sizeof(int), cudaMemcpyDeviceToHost));
 }
 
 
@@ -68,7 +49,7 @@ void mulWithCuda(int *c, const int *a, const int *b, unsigned int size)
 	int *devb = nullptr;
 	int *devc = nullptr;
 
-	try {
+//	try {
 
 		cudaSetup((void**)&deva, (void**)&devb, (void**)&devc, size);
 		cudaTransfer(deva, a, size);
@@ -83,13 +64,32 @@ void mulWithCuda(int *c, const int *a, const int *b, unsigned int size)
 		// any errors encountered during the launch.
 		COOLDAE(cudaDeviceSynchronize());
 
-		cudaGetBack(c, devc, size);)
+		cudaGetBack(c, devc, size);
 
-	} catch (std::exception e) {
+//	} catch (std::exception e) {
 		cudaFree(devc);
 		cudaFree(devb);
 		cudaFree(deva);
 
-		throw e;
-	}
+//		throw e;
+//	}
+}
+
+int main()
+{
+    const int arraySize = 5;
+    const int a[arraySize] = { 1, 2, 3, 4, 5 };
+    const int b[arraySize] = { 10, 10, 10, 10, 10 };
+    int c[arraySize] = { 0 };
+
+	mulWithCuda(c, a, b, arraySize);
+
+    printf("{1,2,3,4,5} dot {10,10,10,10,10} = {%d,%d,%d,%d,%d}\n",
+        c[0], c[1], c[2], c[3], c[4]);
+
+    // cudaDeviceReset must be called before exiting in order for profiling and
+    // tracing tools such as Nsight and Visual Profiler to show complete traces.
+	COOLDAE(cudaDeviceReset());
+
+    return 0;
 }
