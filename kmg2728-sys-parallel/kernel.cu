@@ -43,13 +43,13 @@ void cudaGetBack(int *hostdata, cudaBuf cudabuf, unsigned int size)
 }
 
 
-void mulWithCuda(int *c, const int *a, const int *b, unsigned int size)
+void mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
 {
 	int *deva = nullptr;
 	int *devb = nullptr;
 	int *devc = nullptr;
 
-//	try {
+	try {
 
 		cudaSetup((void**)&deva, (void**)&devb, (void**)&devc, size);
 		cudaTransfer(deva, a, size);
@@ -66,13 +66,13 @@ void mulWithCuda(int *c, const int *a, const int *b, unsigned int size)
 
 		cudaGetBack(c, devc, size);
 
-//	} catch (std::exception e) {
+	} catch (std::exception e) {
 		cudaFree(devc);
 		cudaFree(devb);
 		cudaFree(deva);
 
-//		throw e;
-//	}
+		throw e;
+	}
 }
 
 int main()
@@ -82,7 +82,7 @@ int main()
     const int b[arraySize] = { 10, 10, 10, 10, 10 };
     int c[arraySize] = { 0 };
 
-	mulWithCuda(c, a, b, arraySize);
+	mulWithCudaHostSum(c, a, b, arraySize);
 
     printf("{1,2,3,4,5} dot {10,10,10,10,10} = {%d,%d,%d,%d,%d}\n",
         c[0], c[1], c[2], c[3], c[4]);
