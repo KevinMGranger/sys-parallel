@@ -27,7 +27,7 @@ std::vector<int> bounds(int parts, int mem) {
 	return bnd;
 }
 
-void dot_product(const int *v1, const int *v2, int &result, int L, int R){
+static void dot_product(const int *v1, const int *v2, int &result, int L, int R){
 	int localresult = 0;
 	for (int i = L; i < R; ++i){
 		// traditional race condition follows in the summing

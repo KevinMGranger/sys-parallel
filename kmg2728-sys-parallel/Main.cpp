@@ -43,6 +43,13 @@ int main()
 	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
 
 
+	cout << "Multithreaded SIMD:";
+
+	sum = mulTiThreadedSIMD(c, a, b, size);
+
+	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
+
+
 	cout << "CUDA:\n";
 
 	sum = mulWithCudaHostSum(c, a, b, size);
