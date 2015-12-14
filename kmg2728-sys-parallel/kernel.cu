@@ -3,12 +3,17 @@
 #include "Dotters.h"
 
 #include <stdio.h>
-#include <exception>
+#include <stdexcept>
 #include <numeric>
 
-#define COOLDAE(x) { if (x != cudaSuccess) throw std::exception(#x); }
-#define COOLDAEG(x) { cudaError_t status; status = x; if (status != cudaSuccess) throw std::exception(cudaGetErrorString(status)); }
+
+#pragma region Error Handling macros
+#define COOLDAE(x) { if (x != cudaSuccess) throw std::runtime_error(#x); }
+#define COOLDAEG(x) { cudaError_t status; status = x; if (status != cudaSuccess) throw std::runtime_error(cudaGetErrorString(status)); }
 #define COOLDAG(x, l) { if (x != cudaSuccess) { fprintf(stderr, #x); goto l; }}
+#pragma endregion
+
+static int *deva = nullptr, *devb = nullptr, *devc = nullptr;
 
 __global__ void mulKernel(int *productbuf, const int *arg1buf, const int *arg2buf)
 {
@@ -18,19 +23,12 @@ __global__ void mulKernel(int *productbuf, const int *arg1buf, const int *arg2bu
 
 typedef void* cudaBuf;
 
-void cudaSetup(cudaBuf *a, cudaBuf *b, cudaBuf *c, unsigned int size)
+void cudaSetup(unsigned int size)
 {
 	COOLDAE(cudaSetDevice(0));
-	COOLDAE(cudaMalloc(a, size * sizeof(int)));
-	COOLDAE(cudaMalloc(b, size * sizeof(int)));
-	COOLDAE(cudaMalloc(c, size * sizeof(int)));
-}
-
-void cudaTeardown(cudaBuf a, cudaBuf b, cudaBuf c)
-{
-	cudaFree(a);
-	cudaFree(b);
-	cudaFree(c);
+	COOLDAE(cudaMalloc((void**)&deva, size * sizeof(int)));
+	COOLDAE(cudaMalloc((void**)&devb, size * sizeof(int)));
+	COOLDAE(cudaMalloc((void**)&devc, size * sizeof(int)));
 }
 
 void cudaTransfer(cudaBuf cudabuf, const int *hostdata, unsigned int size)
@@ -43,19 +41,14 @@ void cudaGetBack(int *hostdata, cudaBuf cudabuf, unsigned int size)
 	COOLDAE(cudaMemcpy(hostdata, cudabuf, size * sizeof(int), cudaMemcpyDeviceToHost));
 }
 
-
-unsigned int mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
+void transferAll(const int *a, const int *b, unsigned int size)
 {
-	int *deva = nullptr;
-	int *devb = nullptr;
-	int *devc = nullptr;
-
-	try {
-
-		cudaSetup((void**)&deva, (void**)&devb, (void**)&devc, size);
 		cudaTransfer(deva, a, size);
 		cudaTransfer(devb, b, size);
+}
 
+unsigned int cudaDo(int *c, unsigned int size)
+{
 		mulKernel << <1, size >> >(devc, deva, devb);
 
 		// Check for any errors launching the kernel
@@ -67,7 +60,16 @@ unsigned int mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int
 
 		cudaGetBack(c, devc, size);
 
-		auto sum = std::accumulate(c, c + size, 0);
+		return std::accumulate(c, c + size, 0);
+}
+
+unsigned int mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
+{
+	//try {
+		cudaSetup(size);
+		transferAll(a, b, size);
+
+		auto sum = cudaDo(c, size);
 
 		// cudaDeviceReset must be called before exiting in order for profiling and
 		// tracing tools such as Nsight and Visual Profiler to show complete traces.
@@ -75,11 +77,14 @@ unsigned int mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int
 
 		return sum;
 
+		/*
 	} catch (std::exception e) {
 		cudaFree(devc);
 		cudaFree(devb);
 		cudaFree(deva);
 
+		printf(e.what());
 		throw e;
 	}
+	*/
 }

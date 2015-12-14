@@ -1,0 +1,64 @@
+IGME 451
+Parallel Dot Product
+Kevin Granger
+
+
+I implemented parallel computation of dot products using the following means:
+
+1. Chunked, multithreaded computation.
+2. SIMD
+3. Chunked, multithreaded SIMD computation.
+4. parallel_for
+5. parallel_for with SIMD
+6. CUDA
+
+I ran tests with 8-element arrays and 1024. After noticing interesting behavior with SIMD and threading, I went back and tried some higher numbers.
+
+I tried to do higher than 1024 for all tests, but my program would report CUDA errors in that case-- I suspect it's because of my one element : one thread CUDA setup. 1024 was a reasonably high number that still didn't crash on my machine-- but  if that number doesn't work on your machine, you'll either have to change it or take my numbers on faith.
+
+
+THREADING VERSUS SIMD
+
+SIMD won out every single time. For 8 elements, the SIMD operation was so fast it was reported as 0 seconds (that makes sense, since my SIMD code works on 4 elements at a time.) For 1024 elements, it took 0.06 seconds, while the multithreaded code took 3.48! I believe that this is due to the overhead associated with threading.
+
+
+THREADING PLUS SIMD
+
+We already know that SIMD won out by a staggering margin, so SIMD plus threading can only be slower than just SIMD. And indeed it was: 0.75 seconds for 1024 elements, rather than just 0.06 (but still beating the threaded 3.48).
+
+
+PARALLEL FOR
+
+Parallel for did perform better than plain threading -- 0.39 seconds for 8 elements versus 2.1 seconds. And for 1024 elements, it took 1.48 seconds rather than threading's 3.48. This is because Microsoft has ways of determining optimal scheduling and setup (e.g. they can check for the number of processors / cores you have. We can perform this check too, but it gets a little more complicated.)
+
+
+CUDA
+
+CUDA was *surprisingly* slow! It's an unfortunate side effect of having to move around mass amounts of data. Allocating the needed buffers of data took 106.68 seconds just for 8 elements alone!
+
+However, looking at the 1024 element version, we can already see where the advantages of cuda lie. Allocating 1024-element buffers for CUDA took roughly the same amount of time, as did transferring the data (0.08 seconds).
+
+Doing the computation itself for 1024 elements was still slower than SIMD (0.31 seconds versus 0.06), but this could be the fault of my implementation.
+
+Transferring the data, all things considered, didn't take *that* long. (for 1024 elements, 0.04 to send two buffers and 0.1 to retrieve one) We might assume that for much larger data sets, CUDA might win out.
+
+
+HIGHER NUMBERS
+
+Let's test this a little more, shall we? I excluded CUDA and ran the test again with 8192 elements.
+
+SIMD *still* won out! 0.38 seconds for 8192 elements! Interestingly enough, the multithreaded version took 2.39 seconds, while the multithreaded SIMD version took 2.83. Higher numbers made multithreaded SIMD perform *worse* than just SIMD.
+
+What's really of note is that parallel for took 6.95... *worse* than our plain 'ol threading! And yet, parallel for with SIMD took 1.29 seconds-- not as good as plain SIMD, but better than threaded SIMD, and better than plain parallel for.
+
+Testing with 16384 elements continued most of the trends noted above, with two notable differences: multithreaded SIMD performed *worse* than plain multithreaded code by about 2x-- and parallel for with SIMD performed worse than plain multithreaded code.
+
+This only further sends home two important rules about optimization:
+
+1. It's about the data.
+2. Benchmark, benchmark, benchmark!
+
+
+WHAT TO CHANGE IN THE FUTURE
+
+Suble differences in the final summing of products may produce inaccurate results. If I were to redo this experiment, I would attempt higher levels of consistency here.
