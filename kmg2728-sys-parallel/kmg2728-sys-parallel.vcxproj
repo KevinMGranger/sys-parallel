@@ -156,6 +156,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="parallelFor.cpp" />
     <ClCompile Include="SIMD.cpp" />
     <ClCompile Include="threadedSIMD.cpp" />
     <ClCompile Include="threads.cpp" />

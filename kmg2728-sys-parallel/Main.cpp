@@ -24,36 +24,38 @@ string arrToStr(const int *v, unsigned int size)
 int main()
 {
 	const unsigned int size = 8;
-    __declspec(align(16)) const int a[size] = { 1, 2, 3, 4, 5, 6, 7, 8};
+    __declspec(align(16)) const int a[size] = {1, 2, 3, 4, 5, 6, 7, 8};
     __declspec(align(16)) const int b[size] = {10, 10, 10, 10, 10, 10, 10, 10 };
 	__declspec(align(16)) int c[size] = { 0 };
 	unsigned int sum;
 
 	cout << "Multithreaded:\n";
-
 	sum = mulTiThreaded(c, a, b, size);
-
 	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
 
 
-	cout << "SIMD:";
-
+	cout << "SIMD:\n";
 	sum = mulSIMD(c, a, b, size);
-
 	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
 
 
-	cout << "Multithreaded SIMD:";
-
+	cout << "Multithreaded SIMD:\n";
 	sum = mulTiThreadedSIMD(c, a, b, size);
+	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
 
+
+	cout << "Parallel For:\n";
+	sum = mulParallelFor(c, a, b, size);
+	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
+
+
+	cout << "Parallel For SIMD:\n";
+	sum = mulParallelForSIMD(c, a, b, size);
 	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
 
 
 	cout << "CUDA:\n";
-
 	sum = mulWithCudaHostSum(c, a, b, size);
-
 	cout << arrToStr(a, size) << " dot " << arrToStr(b, size) << " = " << arrToStr(c, size) << "\nSum: " << sum << "\n\n";
 
 
