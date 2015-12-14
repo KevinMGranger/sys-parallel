@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{05AC2E48-AC25-4986-ACB9-760C0F08FCB0}</ProjectGuid>
     <RootNamespace>kmg2728_sys_parallel</RootNamespace>
-    <ProjectName>CUDA</ProjectName>
+    <ProjectName>Parallel</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -153,6 +153,15 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="SIMD.cpp" />
+    <ClCompile Include="threadedSIMD.cpp" />
+    <ClCompile Include="threads.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Dotters.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,9 +1,10 @@
-
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "Dotters.h"
 
 #include <stdio.h>
 #include <exception>
+#include <numeric>
 
 #define COOLDAE(x) { if (x != cudaSuccess) throw std::exception(#x); }
 #define COOLDAEG(x) { cudaError_t status; status = x; if (status != cudaSuccess) throw std::exception(cudaGetErrorString(status)); }
@@ -43,7 +44,7 @@ void cudaGetBack(int *hostdata, cudaBuf cudabuf, unsigned int size)
 }
 
 
-void mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
+unsigned int mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
 {
 	int *deva = nullptr;
 	int *devb = nullptr;
@@ -66,6 +67,14 @@ void mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
 
 		cudaGetBack(c, devc, size);
 
+		auto sum = std::accumulate(c, c + size, 0);
+
+		// cudaDeviceReset must be called before exiting in order for profiling and
+		// tracing tools such as Nsight and Visual Profiler to show complete traces.
+		COOLDAE(cudaDeviceReset());
+
+		return sum;
+
 	} catch (std::exception e) {
 		cudaFree(devc);
 		cudaFree(devb);
@@ -73,23 +82,4 @@ void mulWithCudaHostSum(int *c, const int *a, const int *b, unsigned int size)
 
 		throw e;
 	}
-}
-
-int main()
-{
-    const int arraySize = 5;
-    const int a[arraySize] = { 1, 2, 3, 4, 5 };
-    const int b[arraySize] = { 10, 10, 10, 10, 10 };
-    int c[arraySize] = { 0 };
-
-	mulWithCudaHostSum(c, a, b, arraySize);
-
-    printf("{1,2,3,4,5} dot {10,10,10,10,10} = {%d,%d,%d,%d,%d}\n",
-        c[0], c[1], c[2], c[3], c[4]);
-
-    // cudaDeviceReset must be called before exiting in order for profiling and
-    // tracing tools such as Nsight and Visual Profiler to show complete traces.
-	COOLDAE(cudaDeviceReset());
-
-    return 0;
 }
